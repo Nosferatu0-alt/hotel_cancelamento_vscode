@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+outputs/
+data/hotel_bookings.csv
+.DS_Store
