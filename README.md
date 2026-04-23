@@ -1,67 +1,167 @@
-[Python](https://img.shields.io/badge/python-3.9+-blue.svg)
-![Scikit-Learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikit-learn&logoColor=white)
-![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?logo=pandas&logoColor=white)
-![Status](https://img.shields.io/badge/status-concluído-brightgreen)
-
-> **Desafio 07 | Grupo 7** -> Classificadores  -> Domínio: Hotelaria
-
-##  Objetivo do Projeto
-
-Este projeto utiliza técnicas de Machine Learning para prever se uma reserva de hotel será **cancelada** (`is_canceled = 1`) ou **mantida** (`is_canceled = 0`). 
-
-A capacidade de prever cancelamentos permite que gestores hoteleiros tomem decisões baseadas em dados, como:
-* Redução de prejuízos por cancelamentos de última hora.
-*  Realização de **overbooking estratégico**.
-*  Ações proativas de retenção de clientes.
+[Python](https://img.shields.io/badge/python-3.9+-blue.svg)  ![Scikit-Learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikit-learn&logoColor=white)  ![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?logo=pandas&logoColor=white)  ![Status](https://img.shields.io/badge/status-concluído-brightgreen)
 
 ---
 
-##  Estrutura do Repositório
+# Previsão de Cancelamento de Reservas em Hotéis
+ 
+Machine Learning aplicado ao setor de hotelaria
 
-O projeto foi modularizado para garantir organização e facilidade de manutenção:
+---
+
+## Visão Geral
+
+Este projeto utiliza modelos de classificação para prever se uma reserva de hotel será cancelada.
+
+O problema é tratado como classificação binária:
+
+- `1` → Reserva cancelada  
+- `0` → Reserva mantida  
+
+A solução permite antecipar cancelamentos e apoiar decisões estratégicas no setor hoteleiro.
+
+
+---
+
+## Pipeline do Projeto
+
+```text
+Dados → Limpeza → EDA → Pré-processamento → Modelagem → Avaliação
+```
+
+---
+
+## Modelos Utilizados
+
+Foram treinados e comparados os seguintes algoritmos:
+
+- Regressão Logística  
+- Random Forest  
+- Gradient Boosting  
+
+---
+
+## Resultados
+
+| Modelo               | Acurácia | Precisão | Recall | F1-score |
+|---------------------|----------|----------|--------|----------|
+| Regressão Logística | 0.80     | 0.78     | 0.75   | 0.76     |
+| Random Forest       | 0.85     | 0.83     | 0.82   | 0.82     |
+| Gradient Boosting   | 0.87     | 0.85     | 0.84   | 0.84     |
+
+> Substitua pelos valores reais do seu projeto.
+
+---
+
+## Feature Importance
+
+Principais variáveis que influenciam o cancelamento:
+
+- Lead time (tempo entre reserva e check-in)  
+- Tipo de cliente  
+- Canal de distribuição  
+- Histórico de cancelamentos  
+- Depósito da reserva  
+
+---
+
+## Estrutura do Projeto
 
 ```text
 hotel_cancelamento/
-├── main.py              # Ponto de entrada (executa o pipeline completo)
-├── src/                 # Módulos do projeto
-│   ├── config.py        # Configurações globais e constantes
-│   ├── data_loader.py   # Carregamento e tratamento temporal
-│   ├── eda.py           # Análise Exploratória (7 gráficos automáticos)
-│   ├── preprocessing.py # Encoding e normalização (Sklearn Pipeline)
-│   ├── models.py        # Treinamento e avaliação (LR, RF, GB)
-│   └── evaluation.py    # Comparação de métricas e Feature Importance
-├── data/                # Local para o dataset (hotel_bookings.csv)
-├── outputs/             # Gráficos gerados automaticamente
-└── requirements.txt     # Dependências do sistema
+├── main.py
+├── src/
+│   ├── config.py
+│   ├── data_loader.py
+│   ├── eda.py
+│   ├── preprocessing.py
+│   ├── models.py
+│   └── evaluation.py
+├── data/
+├── outputs/
+└── requirements.txt
 ```
-**como executar?**
-
-# Clone o repositório e acesse a pasta
-git clone <url-do-seu-repositorio>
-cd hotel_cancelamento
-
-# Crie e ative um ambiente virtual
-python -m venv .venv
-# Windows: .venv\Scripts\activate | Linux/macOS: source .venv/bin/activate
-
-# Instale as dependências
-pip install -r requirements.txt
-
-O modelo utiliza o dataset Hotel Booking Demand (Kaggle).
-
-Certifique-se de colocar o arquivo hotel_bookings.csv dentro da pasta data/
-
-# Executar análise completa (EDA + Treinamento)
-python main.py
-
-# Pular a análise gráfica e ir direto para o modelo
-python main.py --skip-eda
-
 
 ---
+
+## Como Executar
+
+### 1. Clonar o repositório
+
+```bash
+git clone <url-do-repositorio>
+cd hotel_cancelamento
+```
+
+### 2. Criar ambiente virtual
+
+```bash
+python -m venv .venv
+```
+
+**Ativar ambiente:**
+
+Windows:
+```bash
+.venv\Scripts\activate
+```
+
+Linux/macOS:
+```bash
+source .venv/bin/activate
+```
+
+### 3. Instalar dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Dataset
+
+Dataset: **Hotel Booking Demand (Kaggle)**  
+
+Coloque o arquivo:https://www.kaggle.com/datasets/jessemostipak/hotel-booking-demand
+
+```text
+hotel_bookings.csv
+```
+
+em:
+
+```text
+data/
+```
+
+---
+
+## Execução
+
+### Pipeline completo (EDA + treinamento)
+
+```bash
+python main.py
+```
+
+### Executar apenas o modelo
+
+```bash
+python main.py --skip-eda
+```
+
+---
+
+## Melhorias Futuras
+
+- Otimização de hiperparâmetros  
+- Teste com modelos mais robustos (XGBoost, LightGBM)  
+  
+
+---
+
 ## Feedback
 
-Este é o meu primeiro treino de Machine Learning e estou em constante aprendizado! 
+Este projeto faz parte do meu aprendizado em Machine Learning.
 
-Se você tiver qualquer sugestão de melhoria no código, na análise de dados ou na escolha dos modelos, **estou totalmente aberta a qualquer feedback que puder me dar.** Sinta-se à vontade para abrir uma *Issue* ou entrar em contato.
----
+Sugestões são bem-vindas. Sinta-se à vontade para abrir uma issue ou contribuir.
