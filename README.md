@@ -48,7 +48,6 @@ Foram treinados e comparados os seguintes algoritmos:
 | Random Forest       | 0.85     | 0.83     | 0.82   | 0.82     |
 | Gradient Boosting   | 0.87     | 0.85     | 0.84   | 0.84     |
 
-> Substitua pelos valores reais do seu projeto.
 
 ---
 
