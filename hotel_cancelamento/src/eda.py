@@ -233,7 +233,7 @@ def plot_missing_outliers(df: pd.DataFrame) -> None:
         axes[0].set_title("Percentual de Nulos por Coluna")
         axes[0].set_xlabel("Percentual (%)")
     else:
-        axes[0].text(0.5, 0.5, "Nenhum valor nulo\nencontrado! ✅",
+        axes[0].text(0.5, 0.5, "Nenhum valor nulo\nencontrado! ",
                      ha="center", va="center", fontsize=14, transform=axes[0].transAxes)
         axes[0].axis("off")
 
@@ -256,6 +256,7 @@ def plot_missing_outliers(df: pd.DataFrame) -> None:
 def plot_sazonalidade(df: pd.DataFrame) -> None:
     """Taxa de cancelamento por mês e estação."""
     month_cancel = df.groupby("arrival_month_name")["is_canceled"].mean() * 100
+    month_cancel.index = month_cancel.index.astype(int)
     month_cancel = month_cancel.reindex(range(1, 13))
 
     estacao_order = ["Verão", "Outono", "Inverno", "Primavera"]

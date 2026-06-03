@@ -11,7 +11,7 @@ import seaborn as sns
 RANDOM_STATE = 42
 
 # Tamanho da amostra
-SAMPLE_SIZE = 2000
+SAMPLE_SIZE = 10000
 
 #  Splits 
 TEST_SIZE       = 0.30   # 30 % → val+test

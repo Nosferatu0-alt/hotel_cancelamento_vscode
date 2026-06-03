@@ -25,13 +25,12 @@ def load_dataset(path: str = "data/hotel_bookings.csv") -> pd.DataFrame:
     print(f"Dataset completo: {df_full.shape[0]:,} linhas × {df_full.shape[1]} colunas")
     print(f"Distribuição alvo (completo):\n{df_full['is_canceled'].value_counts()}\n")
 
-    # Amostragem estratificada
-    df = (
-        df_full.groupby("is_canceled", group_keys=False)
-        .apply(lambda x: x.sample(frac=SAMPLE_SIZE / len(df_full), random_state=RANDOM_STATE))
-        .reset_index(drop=True)
-    )
-    df = df.sample(n=SAMPLE_SIZE, random_state=RANDOM_STATE).reset_index(drop=True)
+    # Amostragem estratificada (compatível com pandas 3.x)
+    grupos = [
+        g.sample(frac=SAMPLE_SIZE / len(df_full), random_state=RANDOM_STATE)
+        for _, g in df_full.groupby("is_canceled", observed=False)
+    ]
+    df = pd.concat(grupos).sample(n=SAMPLE_SIZE, random_state=RANDOM_STATE).reset_index(drop=True)
 
     print(f"Amostra: {df.shape[0]:,} linhas × {df.shape[1]} colunas")
     print(f"Taxa de cancelamento: {df['is_canceled'].mean():.2%}\n")
