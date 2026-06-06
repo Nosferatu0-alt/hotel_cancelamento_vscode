@@ -78,6 +78,7 @@ if st.button('Treinar modelo'):
             st.session_state[f'metrics_{nome}'] = metrics  
 
         st.session_state['preprocessor'] = preprocessor 
+        st.session_state['models'] = models
         status.update(label="Modelo treinado!", state="complete")
             
         
