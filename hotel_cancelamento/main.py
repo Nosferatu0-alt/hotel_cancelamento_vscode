@@ -56,6 +56,7 @@ def main():
 
     print("=" * 60)
     print("DESAFIO 07 — CANCELAMENTO DE RESERVAS DE HOTEL")
+    
     print("=" * 60)
 
     #  Etapa 0: Carregar e preparar dados 
@@ -78,9 +79,7 @@ def main():
     X_train, X_val, X_test, y_train, y_val, y_test = split_data(X, y)
 
     preprocessor = build_preprocessor()
-    X_train_proc, X_val_proc, X_test_proc, feature_names = fit_transform_data(
-        X_train, X_val, X_test, preprocessor
-    )
+    X_train_proc, X_val_proc, X_test_proc, feature_names = fit_transform_data(X_train, X_val, X_test, preprocessor)
 
     # ── Etapa 3: Modelagem ────────────────────────────────────────────────────
     print("\n" + "=" * 60)

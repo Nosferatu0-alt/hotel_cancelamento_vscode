@@ -153,7 +153,7 @@ def plot_correlacoes(df: pd.DataFrame) -> None:
     corr_target = df[num_cols].corr()["is_canceled"].drop("is_canceled").sort_values(key=abs, ascending=False)
     top15 = corr_target.head(15)
 
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(20, 8))
     fig.suptitle("Correlação com Cancelamento", fontsize=14, fontweight="bold")
 
     colors_corr = [COLORS["red"] if v > 0 else COLORS["green"] for v in top15.values]
@@ -170,9 +170,11 @@ def plot_correlacoes(df: pd.DataFrame) -> None:
     heatmap_data = df[top10_feats].corr()
     mask = np.triu(np.ones_like(heatmap_data, dtype=bool))
     sns.heatmap(heatmap_data, mask=mask, ax=axes[1], cmap="RdYlGn",
-                annot=True, fmt=".2f", square=True, linewidths=0.5)
+                annot=True, fmt=".2f", square=True, linewidths=0.5,
+                annot_kws={"size": 7})
     axes[1].set_title("Mapa de Calor — Top 10 Features")
-    axes[1].tick_params(axis="x", rotation=45)
+    axes[1].tick_params(axis="x", rotation=45, labelsize=8)
+    axes[1].tick_params(axis="y", labelsize=8)
 
     plt.tight_layout()
     _save(fig, "04_correlacoes.png")
