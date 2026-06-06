@@ -34,8 +34,17 @@ MODEL_EVAL_FNAMES = {
     "Gradient Boosting":   "10_gb_avaliacao.png",
 }
 
+
+
+
+
+
 # titulo
 st.title("Previsão de Cancelamento de Hotel")
+
+with st.expander('Ver Dataframe'):
+        df = load_dataset()
+        st.dataframe(df)
 
 
 # Carregamento de dados
@@ -45,15 +54,15 @@ if st.button('Treinar modelo'):
         df = load_dataset()
         df = add_temporal_features(df)
         
-        st.write('Pré-processamento')
+        st.write('Pré-processamento...')
         X, y = prepare_features(df)
         X_train, X_val, X_test, y_train, y_val, y_test = split_data(X, y)
 
         preprocessor = build_preprocessor()
         X_train_proc, X_val_proc, X_test_proc, feature_names = fit_transform_data(X_train, X_val, X_test, preprocessor)
         
-        st.write('--- Modelagem ---')
-        models     = build_models()
+        st.write('Modelando...')
+        models = build_models()
         all_metrics = []
 
         for nome, model in models.items():
@@ -63,43 +72,92 @@ if st.button('Treinar modelo'):
                 metrics, y_test,
                 cmap=MODEL_CMAPS[nome],
                 fname=MODEL_EVAL_FNAMES[nome]
-        )
+            )
+            
+            st.session_state[f'modelo_{nome}'] = model
+            st.session_state[f'metrics_{nome}'] = metrics  
+
+        st.session_state['preprocessor'] = preprocessor 
         status.update(label="Modelo treinado!", state="complete")
             
         
 
-
-# previsão
-
 # Coleta de dados do Usuário
-col1, col2, col3 = st.columns(3)
 
-with col1:
+st.text('Coleta de dados do Usuário')
 
-    deposit_type = st.selectbox('deposit_type (Tipo de depósito):', ['Tipo de depósito','Non Refund','Refundable', 'No Deposit'])
+deposit_type = st.selectbox('deposit_type (Tipo de depósito):', ['Tipo de depósito','Non Refund','Refundable', 'No Deposit'])
 
-    lead_time = st.number_input('lead_time (Antecedência da reserva):', min_value=0)
+lead_time = st.number_input('lead_time (Antecedência da reserva):', min_value=0)
 
-    total_of_special_requests = st.number_input('total_of_special_requests (Total de solicitações especiais):', min_value= 0)
+total_of_special_requests = st.number_input('total_of_special_requests (Total de solicitações especiais):', min_value= 0)
 
-    market_segment = st.selectbox('market_segment (Segmento de mercado):',['Segmento de mercado','Online TA','Offline TA/TO', 'Direct', 'Groups', 'Corporate'])
+market_segment = st.selectbox('market_segment (Segmento de mercado):',['Segmento de mercado','Online TA','Offline TA/TO', 'Direct', 'Groups', 'Corporate'])
 
-    previous_cancellations = st.number_input('previous_cancellations (Cancelamentos anteriores):', min_value= 0)
+previous_cancellations = st.number_input('previous_cancellations (Cancelamentos anteriores):', min_value= 0)
     
-    required_car_parking_spaces = st.number_input('required_car_parking_spaces (Vagas de estacionamento necessárias):', min_value= 0)
+required_car_parking_spaces = st.number_input('required_car_parking_spaces (Vagas de estacionamento necessárias):', min_value= 0)
 
-    adr = st.number_input('Tarifa Média Diária (ADR):', min_value= 0.0)
+adr = st.number_input('Tarifa Média Diária (ADR):', min_value= 0.0)
 
-    booking_changes = st.number_input('booking_changes (Alterações na reserva):', min_value= 0)
+booking_changes = st.number_input('booking_changes (Alterações na reserva):', min_value= 0)
 
-    customer_type = st.selectbox('customer_type (Tipo de cliente):',['Tipo de cliente','Transient', 'Transient-Party'])
+customer_type = st.selectbox('customer_type (Tipo de cliente):',['Tipo de cliente','Transient', 'Transient-Party'])
 
-with col2:
+
+#Previsão
+
+if st.button('Prever'):
+    dados_usuario = pd.DataFrame([{
+    # inputs do usuário
+    'deposit_type': deposit_type,
+    'lead_time': lead_time,
+    'total_of_special_requests': total_of_special_requests,
+    'market_segment': market_segment,
+    'previous_cancellations': previous_cancellations,
+    'required_car_parking_spaces': required_car_parking_spaces,
+    'adr': adr,
+    'booking_changes': booking_changes,
+    'customer_type': customer_type,
+
+    # valores padrão
+    'stays_in_weekend_nights': 1,
+    'stays_in_week_nights': 2,
+    'adults': 2,
+    'children': 0,
+    'babies': 0,
+    'previous_bookings_not_canceled': 0,
+    'days_in_waiting_list': 0,
+    'hotel': 'City Hotel',
+    'meal': 'BB',
+    'distribution_channel': 'TA/TO',
+    'reserved_room_type': 'A',
+    'estacao': 'Verão',
+}])
     
-    with st.expander('Ver Dataframe'):
-        df = load_dataset()
-        st.dataframe(df)
+    preprocessor = st.session_state['preprocessor']
+    dados_proc = preprocessor.transform(dados_usuario)
+
+    col1, col2, col3 = st.columns(3)
+    colunas = [col1, col2, col3]
+
+    for col, nome in zip(colunas, st.session_state['models'].keys()):
+        with col:
+            modelo = st.session_state[f'modelo_{nome}']
+            metrics = st.session_state[f'metrics_{nome}']
+            pred = modelo.predict(dados_proc)[0]
+            
+            st.text(nome)
+            if pred == 1:
+                st.error("Cancela ❌")
+            else:
+                st.success("Não Cancela ✅")
+            st.header('Métricas')
+            st.metric("Acurácia",  f"{metrics['acuracia']:.2%}")
+            st.metric("Precisão",  f"{metrics['precisao']:.2%}")
+            st.metric("Recall",    f"{metrics['recall']:.2%}")
+            st.metric("F1",        f"{metrics['f1']:.2%}")
 
 
-with col3:
-    st.text('Gráficos')
+
+
