@@ -4,6 +4,11 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
+# DEBUG — remova depois
+import streamlit as st
+st.write("BASE_DIR:", BASE_DIR)
+st.write("sys.path:", sys.path[:3])
+
 import streamlit as st
 import pandas as pd
 import numpy as np
