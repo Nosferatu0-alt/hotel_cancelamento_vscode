@@ -1,14 +1,20 @@
 """
 models.py — Treinamento e avaliação dos classificadores
 """
+"""
+models.py — Treinamento e avaliação dos classificadores
+"""
 
+# ← ESSAS 3 LINHAS PRIMEIRO, antes de tudo
+import sys
 import os
-from typing import Any, Dict, List, Tuple
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from typing import Any, Dict, List, Tuple
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (

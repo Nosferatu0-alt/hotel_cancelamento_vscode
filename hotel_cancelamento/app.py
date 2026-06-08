@@ -9,10 +9,11 @@ from src.eda           import run_eda
 from src.preprocessing import (
     prepare_features, split_data, build_preprocessor, fit_transform_data
 )
-from hotel_cancelamento_vscode.hotel_cancelamento.model.models        import (
+
+from model.models import (
     build_models, evaluate_model, plot_model_evaluation,
     cross_validate_models, plot_kfold, plot_roc_comparativo,
-    save_final_model  # Importando a função que adicionamos no seu models.py
+    save_final_model
 )
 from src.evaluation    import (
     plot_feature_importance, build_results_table, print_results_table,
