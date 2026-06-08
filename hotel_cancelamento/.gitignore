@@ -5,3 +5,4 @@ __pycache__/
 outputs/
 data/hotel_bookings.csv
 .DS_Store
+*.egg-info/

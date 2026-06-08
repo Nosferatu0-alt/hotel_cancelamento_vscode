@@ -18,7 +18,7 @@ from src.eda           import run_eda
 from src.preprocessing import (
     prepare_features, split_data, build_preprocessor, fit_transform_data
 )
-from src.models        import (
+from hotel_cancelamento_vscode.hotel_cancelamento.model.models        import (
     build_models, evaluate_model, plot_model_evaluation,
     cross_validate_models, plot_kfold, plot_roc_comparativo,
 )
