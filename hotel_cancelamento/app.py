@@ -1,5 +1,4 @@
 import streamlit as st
-
 import pandas as pd
 import numpy as np
 from src.config        import setup_visual
@@ -19,9 +18,6 @@ from src.evaluation    import (
 from src.config import RANDOM_STATE, SAMPLE_SIZE, MONTH_NAME_TO_NUM, SEASON_MAP
 
 
-
-
-
 MODEL_CMAPS = {
     "Logistic Regression": "Blues",
     "Random Forest":       "Greens",
@@ -35,33 +31,111 @@ MODEL_EVAL_FNAMES = {
 }
 
 
-
-
-
-
-# titulo
 st.title("Previsão de Cancelamento de Hotel")
 
-with st.expander('Ver Dataframe'):
-        df = load_dataset()
-        st.dataframe(df)
+with st.expander("Ver Dataframe"):
+    df = load_dataset()
+    st.dataframe(df)
 
 
-# Carregamento de dados
-if st.button('Treinar modelo'):
-    with st.status('Treinando modelo...', expanded = True) as status:
-        st.write('Carregando dados...')
+st.header("Dados da Reserva")
+st.caption("Preencha as informações abaixo para prever se a reserva será cancelada.")
+
+tipo_deposito = st.selectbox(
+    "Tipo de Depósito",
+    ["Selecione...", "Non Refund", "Refundable", "No Deposit"],
+    format_func=lambda x: {
+        "Selecione...":  "Selecione...",
+        "Non Refund":    "Sem reembolso",
+        "Refundable":    "Reembolsável",
+        "No Deposit":    "Sem depósito",
+    }[x],
+    help="Se o cliente pagou algum depósito antecipado e se ele pode ser devolvido ou não."
+)
+
+antecedencia_reserva = st.number_input(
+    "Antecedência da Reserva (dias)",
+    min_value=0,
+    help="Quantos dias antes do check-in a reserva foi feita."
+)
+
+pedidos_extras = st.number_input(
+    "Pedidos Extras",
+    min_value=0,
+    help="Quantidade de pedidos adicionais feitos pelo cliente, como cama extra, berço, quarto no andar mais alto, travesseiro especial, etc."
+)
+
+segmento_mercado = st.selectbox(
+    "Como a reserva foi feita",
+    ["Selecione...", "Online TA", "Offline TA/TO", "Direct", "Groups", "Corporate"],
+    format_func=lambda x: {
+        "Selecione...":  "Selecione...",
+        "Online TA":     "Agência de viagem online (ex: Booking, Expedia)",
+        "Offline TA/TO": "Agência de viagem presencial ou operadora de turismo",
+        "Direct":        "Direto com o hotel",
+        "Groups":        "Reserva em grupo",
+        "Corporate":     "Empresa / corporativo",
+    }[x],
+)
+
+cancelamentos_anteriores = st.number_input(
+    "Cancelamentos Anteriores do Cliente",
+    min_value=0,
+    help="Quantas vezes esse mesmo cliente já cancelou reservas no passado."
+)
+
+vagas_estacionamento = st.number_input(
+    "Vagas de Estacionamento Necessárias",
+    min_value=0,
+    help="Número de vagas de estacionamento solicitadas pelo cliente."
+)
+
+tarifa_media_diaria = st.number_input(
+    "Tarifa Média Diária (R$)",
+    min_value=0.0,
+    max_value=10000.0,
+    step=10.0,
+    help="Valor médio cobrado por diária, já considerando descontos ou pacotes aplicados."
+)
+
+alteracoes_reserva = st.number_input(
+    "Alterações feitas na Reserva",
+    min_value=0,
+    help="Quantas vezes o cliente modificou a reserva, como trocar a data, o tipo de quarto, etc."
+)
+
+tipo_cliente = st.selectbox(
+    "Tipo de Cliente",
+    ["Selecione...", "Transient", "Transient-Party"],
+    format_func=lambda x: {
+        "Selecione...":    "Selecione...",
+        "Transient":       "Individual (reserva avulsa)",
+        "Transient-Party": "Grupo pequeno / acompanhantes",
+    }[x],
+)
+
+
+# Treinamento do Modelo
+st.divider()
+st.subheader("Treinamento do Modelo")
+st.caption("Treine o modelo antes de fazer previsões. Isso pode levar alguns instantes.")
+
+if st.button("Treinar Modelo"):
+    with st.status("Treinando modelo...", expanded=True) as status:
+        st.write("Carregando dados...")
         df = load_dataset()
         df = add_temporal_features(df)
-        
-        st.write('Pré-processamento...')
+
+        st.write("Pré-processamento...")
         X, y = prepare_features(df)
         X_train, X_val, X_test, y_train, y_val, y_test = split_data(X, y)
 
         preprocessor = build_preprocessor()
-        X_train_proc, X_val_proc, X_test_proc, feature_names = fit_transform_data(X_train, X_val, X_test, preprocessor)
-        
-        st.write('Modelando...')
+        X_train_proc, X_val_proc, X_test_proc, feature_names = fit_transform_data(
+            X_train, X_val, X_test, preprocessor
+        )
+
+        st.write("Treinando modelos...")
         models = build_models()
         all_metrics = []
 
@@ -73,92 +147,74 @@ if st.button('Treinar modelo'):
                 cmap=MODEL_CMAPS[nome],
                 fname=MODEL_EVAL_FNAMES[nome]
             )
-            
             st.session_state[f'modelo_{nome}'] = model
-            st.session_state[f'metrics_{nome}'] = metrics  
+            st.session_state[f'metrics_{nome}'] = metrics
 
-        st.session_state['preprocessor'] = preprocessor 
+        st.session_state['preprocessor'] = preprocessor
         st.session_state['models'] = models
-        status.update(label="Modelo treinado!", state="complete")
-            
-        
-
-# Coleta de dados do Usuário
-
-st.text('Coleta de dados do Usuário')
-
-deposit_type = st.selectbox('deposit_type (Tipo de depósito):', ['Tipo de depósito','Non Refund','Refundable', 'No Deposit'])
-
-lead_time = st.number_input('lead_time (Antecedência da reserva):', min_value=0)
-
-total_of_special_requests = st.number_input('total_of_special_requests (Total de solicitações especiais):', min_value= 0)
-
-market_segment = st.selectbox('market_segment (Segmento de mercado):',['Segmento de mercado','Online TA','Offline TA/TO', 'Direct', 'Groups', 'Corporate'])
-
-previous_cancellations = st.number_input('previous_cancellations (Cancelamentos anteriores):', min_value= 0)
-    
-required_car_parking_spaces = st.number_input('required_car_parking_spaces (Vagas de estacionamento necessárias):', min_value= 0)
-
-adr = st.number_input('Tarifa Média Diária (ADR):', min_value= 0.0)
-
-booking_changes = st.number_input('booking_changes (Alterações na reserva):', min_value= 0)
-
-customer_type = st.selectbox('customer_type (Tipo de cliente):',['Tipo de cliente','Transient', 'Transient-Party'])
+        status.update(label="Modelo treinado com sucesso!", state="complete")
 
 
-#Previsão
+# Previsão
+st.divider()
 
-if st.button('Prever'):
+if st.button("Prever Cancelamento"):
+
+    if 'preprocessor' not in st.session_state or 'models' not in st.session_state:
+        st.error("Treine o modelo primeiro antes de fazer previsões. Clique em 'Treinar Modelo' acima.")
+        st.stop()
+
+    if tipo_deposito == "Selecione..." or segmento_mercado == "Selecione..." or tipo_cliente == "Selecione...":
+        st.warning("Preencha todos os campos do formulário antes de prever.")
+        st.stop()
+
     dados_usuario = pd.DataFrame([{
-    # inputs do usuário
-    'deposit_type': deposit_type,
-    'lead_time': lead_time,
-    'total_of_special_requests': total_of_special_requests,
-    'market_segment': market_segment,
-    'previous_cancellations': previous_cancellations,
-    'required_car_parking_spaces': required_car_parking_spaces,
-    'adr': adr,
-    'booking_changes': booking_changes,
-    'customer_type': customer_type,
+        # Inputs do usuário
+        'deposit_type':                tipo_deposito,
+        'lead_time':                   antecedencia_reserva,
+        'total_of_special_requests':   pedidos_extras,
+        'market_segment':              segmento_mercado,
+        'previous_cancellations':      cancelamentos_anteriores,
+        'required_car_parking_spaces': vagas_estacionamento,
+        'adr':                         tarifa_media_diaria,
+        'booking_changes':             alteracoes_reserva,
+        'customer_type':               tipo_cliente,
 
-    # valores padrão
-    'stays_in_weekend_nights': 1,
-    'stays_in_week_nights': 2,
-    'adults': 2,
-    'children': 0,
-    'babies': 0,
-    'previous_bookings_not_canceled': 0,
-    'days_in_waiting_list': 0,
-    'hotel': 'City Hotel',
-    'meal': 'BB',
-    'distribution_channel': 'TA/TO',
-    'reserved_room_type': 'A',
-    'estacao': 'Verão',
-}])
-    
+        # Valores padrão
+        'stays_in_weekend_nights':         1,
+        'stays_in_week_nights':            2,
+        'adults':                          2,
+        'children':                        0,
+        'babies':                          0,
+        'previous_bookings_not_canceled':  0,
+        'days_in_waiting_list':            0,
+        'hotel':                           'City Hotel',
+        'meal':                            'BB',
+        'distribution_channel':            'TA/TO',
+        'reserved_room_type':              'A',
+        'estacao':                         'Verão',
+    }])
+
     preprocessor = st.session_state['preprocessor']
     dados_proc = preprocessor.transform(dados_usuario)
 
+    st.subheader("Resultado da Previsão")
     col1, col2, col3 = st.columns(3)
-    colunas = [col1, col2, col3]
 
-    for col, nome in zip(colunas, st.session_state['models'].keys()):
+    for col, nome in zip([col1, col2, col3], st.session_state['models'].keys()):
         with col:
-            modelo = st.session_state[f'modelo_{nome}']
+            modelo  = st.session_state[f'modelo_{nome}']
             metrics = st.session_state[f'metrics_{nome}']
-            pred = modelo.predict(dados_proc)[0]
-            
-            st.text(nome)
+            pred    = modelo.predict(dados_proc)[0]
+
+            st.markdown(f"**{nome}**")
             if pred == 1:
-                st.error("Cancela ❌")
+                st.error("Cancela")
             else:
-                st.success("Não Cancela ✅")
-            st.header('Métricas')
-            st.metric("Acurácia",  f"{metrics['acuracia']:.2%}")
-            st.metric("Precisão",  f"{metrics['precisao']:.2%}")
-            st.metric("Recall",    f"{metrics['recall']:.2%}")
-            st.metric("F1",        f"{metrics['f1']:.2%}")
+                st.success("Não Cancela")
 
-
-
-
+            st.markdown("**Metricas do Modelo**")
+            st.metric("Acuracia", f"{metrics['acuracia']:.2%}")
+            st.metric("Precisao", f"{metrics['precisao']:.2%}")
+            st.metric("Recall",   f"{metrics['recall']:.2%}")
+            st.metric("F1",       f"{metrics['f1']:.2%}")
