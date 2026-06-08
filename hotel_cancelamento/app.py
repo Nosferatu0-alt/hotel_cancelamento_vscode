@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import joblib  # Adicionado para carregar o modelo salvo
+import os
 from src.config        import setup_visual
 from src.data_loader   import load_dataset, add_temporal_features
 from src.eda           import run_eda
@@ -10,6 +12,7 @@ from src.preprocessing import (
 from src.models        import (
     build_models, evaluate_model, plot_model_evaluation,
     cross_validate_models, plot_kfold, plot_roc_comparativo,
+    save_final_model  # Importando a função que adicionamos no seu models.py
 )
 from src.evaluation    import (
     plot_feature_importance, build_results_table, print_results_table,
@@ -29,6 +32,22 @@ MODEL_EVAL_FNAMES = {
     "Random Forest":       "09_rf_avaliacao.png",
     "Gradient Boosting":   "10_gb_avaliacao.png",
 }
+
+# --- INICIALIZAÇÃO AUTOMÁTICA DO MODELO SALVO ---
+# Verifica se o modelo já foi exportado para não precisar treinar toda vez
+CAMINHO_MODELO = os.path.join("model", "modelo_final.joblib")
+
+if 'modelo_carregado' not in st.session_state:
+    if os.path.exists(CAMINHO_MODELO):
+        try:
+            artefatos = joblib.load(CAMINHO_MODELO)
+            st.session_state['modelo_final'] = artefatos["model"]
+            st.session_state['preprocessor'] = artefatos["preprocessor"]
+            st.session_state['modelo_carregado'] = True
+        except Exception as e:
+            st.session_state['modelo_carregado'] = False
+    else:
+        st.session_state['modelo_carregado'] = False
 
 
 st.title("Previsão de Cancelamento de Hotel")
@@ -118,7 +137,11 @@ tipo_cliente = st.selectbox(
 # Treinamento do Modelo
 st.divider()
 st.subheader("Treinamento do Modelo")
-st.caption("Treine o modelo antes de fazer previsões. Isso pode levar alguns instantes.")
+
+if st.session_state['modelo_carregado']:
+    st.success("O modelo final pré-treinado já está carregado e pronto para uso!")
+else:
+    st.caption("Nenhum modelo pré-treinado encontrado. Treine o modelo antes de fazer previsões.")
 
 if st.button("Treinar Modelo"):
     with st.status("Treinando modelo...", expanded=True) as status:
@@ -152,7 +175,16 @@ if st.button("Treinar Modelo"):
 
         st.session_state['preprocessor'] = preprocessor
         st.session_state['models'] = models
-        status.update(label="Modelo treinado com sucesso!", state="complete")
+        
+        # --- EXECUÇÃO DA ROTINA DE EXPORTAÇÃO ---
+        # Salvando por padrão o Gradient Boosting que costuma ser o melhor performance do projeto
+        st.write("Exportando modelo final...")
+        save_final_model(models["Gradient Boosting"], preprocessor)
+        
+        st.session_state['modelo_final'] = models["Gradient Boosting"]
+        st.session_state['modelo_carregado'] = True
+        
+        status.update(label="Modelo treinado e exportado com sucesso!", state="complete")
 
 
 # Previsão
@@ -160,7 +192,8 @@ st.divider()
 
 if st.button("Prever Cancelamento"):
 
-    if 'preprocessor' not in st.session_state or 'models' not in st.session_state:
+    # Garante que o preprocessor e algum modelo existam na sessão antes de continuar
+    if not st.session_state['modelo_carregado'] and ('preprocessor' not in st.session_state or 'models' not in st.session_state):
         st.error("Treine o modelo primeiro antes de fazer previsões. Clique em 'Treinar Modelo' acima.")
         st.stop()
 
@@ -199,22 +232,37 @@ if st.button("Prever Cancelamento"):
     dados_proc = preprocessor.transform(dados_usuario)
 
     st.subheader("Resultado da Previsão")
-    col1, col2, col3 = st.columns(3)
+    
+    # Se carregou o modelo unificado via Joblib, exibe direto a resposta definitiva dele
+    if 'modelo_final' in st.session_state:
+        modelo = st.session_state['modelo_final']
+        pred = modelo.predict(dados_proc)[0]
+        
+        st.markdown("**Veredito do Modelo Otimizado (Gradient Boosting)**")
+        if pred == 1:
+            st.error("A reserva tem alta probabilidade de ser CANCELADA.")
+        else:
+            st.success("A reserva será MANTIDA (Baixo risco de cancelamento).")
+            
+    # Caso tenha acabado de rodar o treino manual na sessão, mantém a visualização tripla original
+    if 'models' in st.session_state:
+        st.markdown("---")
+        st.caption("Comparativo detalhado de todos os classificadores testados:")
+        col1, col2, col3 = st.columns(3)
+        for col, nome in zip([col1, col2, col3], st.session_state['models'].keys()):
+            with col:
+                modelo  = st.session_state[f'modelo_{nome}']
+                metrics = st.session_state[f'metrics_{nome}']
+                pred_individual = modelo.predict(dados_proc)[0]
 
-    for col, nome in zip([col1, col2, col3], st.session_state['models'].keys()):
-        with col:
-            modelo  = st.session_state[f'modelo_{nome}']
-            metrics = st.session_state[f'metrics_{nome}']
-            pred    = modelo.predict(dados_proc)[0]
+                st.markdown(f"**{nome}**")
+                if pred_individual == 1:
+                    st.error("Cancela")
+                else:
+                    st.success("Não Cancela")
 
-            st.markdown(f"**{nome}**")
-            if pred == 1:
-                st.error("Cancela")
-            else:
-                st.success("Não Cancela")
-
-            st.markdown("**Metricas do Modelo**")
-            st.metric("Acuracia", f"{metrics['acuracia']:.2%}")
-            st.metric("Precisao", f"{metrics['precisao']:.2%}")
-            st.metric("Recall",   f"{metrics['recall']:.2%}")
-            st.metric("F1",       f"{metrics['f1']:.2%}")
+                st.markdown("**Metricas do Modelo**")
+                st.metric("Acuracia", f"{metrics['acuracia']:.2%}")
+                st.metric("Precisao", f"{metrics['precisao']:.2%}")
+                st.metric("Recall",   f"{metrics['recall']:.2%}")
+                st.metric("F1",       f"{metrics['f1']:.2%}")
