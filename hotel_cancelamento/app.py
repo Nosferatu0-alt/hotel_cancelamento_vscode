@@ -1,27 +1,25 @@
-import streamlit as st
 import sys
 import os
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib  # Adicionado para carregar o modelo salvo
-import os
+import joblib
 from src.config        import setup_visual
 from src.data_loader   import load_dataset, add_temporal_features
 from src.eda           import run_eda
 from src.preprocessing import (
     prepare_features, split_data, build_preprocessor, fit_transform_data
 )
-
 from model.models import (
     build_models, evaluate_model, plot_model_evaluation,
     cross_validate_models, plot_kfold, plot_roc_comparativo,
     save_final_model
 )
-from src.evaluation    import (
+from src.evaluation import (
     plot_feature_importance, build_results_table, print_results_table,
     plot_comparacao_final, plot_best_model_importance,
 )
