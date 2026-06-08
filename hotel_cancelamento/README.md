@@ -55,7 +55,7 @@ Desenvolver um modelo de Machine Learning capaz de prever se uma reserva de hote
 
 ---
 
-## 🤖 Tipo de Problema de Machine Learning
+##  Tipo de Problema de Machine Learning
 
 **Classificação Binária Supervisionada** — prever se uma reserva será cancelada (1) ou mantida (0).
 
