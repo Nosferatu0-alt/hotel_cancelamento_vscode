@@ -5,10 +5,13 @@ models.py — Treinamento e avaliação dos classificadores
 models.py — Treinamento e avaliação dos classificadores
 """
 
-# ← ESSAS 3 LINHAS PRIMEIRO, antes de tudo
+
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
+
+
 
 import joblib
 import matplotlib.pyplot as plt
@@ -28,6 +31,7 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.model_selection import StratifiedKFold, cross_val_score
+
 
 from src.config import COLORS, OUTPUT_DIR, RANDOM_STATE
 

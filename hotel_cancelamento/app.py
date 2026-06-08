@@ -1,4 +1,10 @@
 import streamlit as st
+import sys
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
+
+import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib  # Adicionado para carregar o modelo salvo
