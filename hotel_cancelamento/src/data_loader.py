@@ -7,7 +7,12 @@ import pandas as pd
 from src.config import RANDOM_STATE, SAMPLE_SIZE, MONTH_NAME_TO_NUM, SEASON_MAP
 
 
-def load_dataset(path: str = "data/hotel_bookings.csv") -> pd.DataFrame:
+import os as _os
+_BASE = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+
+def load_dataset(path: str = None) -> pd.DataFrame:
+    if path is None:
+        path = _os.path.join(_BASE, "data", "hotel_bookings.csv")
     """
     Carrega o CSV completo e retorna amostra estratificada de SAMPLE_SIZE linhas.
 
