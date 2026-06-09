@@ -337,8 +337,7 @@ MODEL_EVAL_FNAMES = {
     "Gradient Boosting":   "10_gb_avaliacao.png",
 }
 CAMINHO_MODELO = os.path.join("model", "modelo_final.joblib")
-REPORTS_DIR    = os.path.join(BASE_DIR, "reports")
-
+REPORTS_DIR    = os.path.join(BASE_DIR, "outputs")
 
 # ── Carrega modelo salvo ─────────────────────────────────────────────────────
 if 'modelo_carregado' not in st.session_state:
