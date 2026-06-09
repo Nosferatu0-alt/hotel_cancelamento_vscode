@@ -29,7 +29,6 @@ from src.config import RANDOM_STATE, SAMPLE_SIZE, MONTH_NAME_TO_NUM, SEASON_MAP
 # ── Configuração da página ──────────────────────────────────────────────────
 st.set_page_config(
     page_title="HotelIQ — Previsão de Cancelamento",
-    page_icon="🏨",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -371,7 +370,7 @@ st.markdown("""
 
 
 # ── Dataset expandível ───────────────────────────────────────────────────────
-with st.expander("📋  Visualizar dataset completo"):
+with st.expander(" Visualizar dataset completo"):
     df = load_dataset()
     st.dataframe(df, use_container_width=True)
 
@@ -454,7 +453,7 @@ st.markdown('<div class="section-label">Modelo</div>', unsafe_allow_html=True)
 
 btn_col, _ = st.columns([1, 3])
 with btn_col:
-    treinar = st.button("⚙️  Treinar Modelo", use_container_width=True)
+    treinar = st.button("  Treinar Modelo", use_container_width=True)
 
 if treinar:
     with st.status("Treinando modelo...", expanded=True) as status:
@@ -504,7 +503,7 @@ st.markdown('<div class="section-label">Previsão</div>', unsafe_allow_html=True
 prev_col, _ = st.columns([1, 3])
 with prev_col:
     st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
-    prever = st.button("🔍  Prever Cancelamento", use_container_width=True)
+    prever = st.button("  Prever Cancelamento", use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 if prever:
