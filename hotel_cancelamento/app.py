@@ -8,6 +8,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from io import BytesIO
+
 from src.config        import setup_visual
 from src.data_loader   import load_dataset, add_temporal_features
 from src.eda           import run_eda
@@ -24,6 +29,11 @@ from src.evaluation import (
     plot_comparacao_final, plot_best_model_importance,
 )
 from src.config import RANDOM_STATE, SAMPLE_SIZE, MONTH_NAME_TO_NUM, SEASON_MAP
+
+from sklearn.metrics import (
+    confusion_matrix, ConfusionMatrixDisplay,
+    roc_curve, auc, classification_report
+)
 
 
 # ── Configuração da página ──────────────────────────────────────────────────
@@ -316,7 +326,6 @@ div[data-testid="stStatus"] {
     border-radius: 10px !important;
 }
 
-/* Matplotlib / pyplot fundo transparente */
 div[data-testid="stImage"] img {
     border-radius: 10px;
     border: 1px solid #1E2535;
@@ -331,13 +340,126 @@ MODEL_CMAPS = {
     "Random Forest":       "Greens",
     "Gradient Boosting":   "Oranges",
 }
-MODEL_EVAL_FNAMES = {
-    "Logistic Regression": "08_lr_avaliacao.png",
-    "Random Forest":       "09_rf_avaliacao.png",
-    "Gradient Boosting":   "10_gb_avaliacao.png",
-}
-CAMINHO_MODELO = os.path.join("model", "modelo_final.joblib")
-REPORTS_DIR    = os.path.join(BASE_DIR, "outputs")
+
+CAMINHO_MODELO = os.path.join(BASE_DIR, "model", "modelo_final.joblib")
+
+
+# ── Helpers de gráficos inline ───────────────────────────────────────────────
+def _fig_to_bytes(fig):
+    buf = BytesIO()
+    fig.savefig(buf, format="png", dpi=130, bbox_inches="tight",
+                facecolor="#161B27", edgecolor="none")
+    buf.seek(0)
+    plt.close(fig)
+    return buf
+
+
+def plot_confusion_matrix_inline(model, X_test, y_test, cmap, nome):
+    y_pred = model.predict(X_test)
+    cm = confusion_matrix(y_test, y_pred)
+    fig, ax = plt.subplots(figsize=(4, 3.5))
+    fig.patch.set_facecolor("#161B27")
+    ax.set_facecolor("#161B27")
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["Mantida", "Cancelada"])
+    disp.plot(ax=ax, cmap=cmap, values_format="d")  # FIX: era colormap=, agora cmap=
+    ax.set_title(f"Matriz de Confusão — {nome}", color="#E8EAF0", fontsize=11, pad=10)
+    for text in ax.texts:
+        text.set_color("#E8EAF0")
+    ax.tick_params(colors="#9CA3AF")
+    ax.xaxis.label.set_color("#9CA3AF")
+    ax.yaxis.label.set_color("#9CA3AF")
+    plt.tight_layout()
+    return _fig_to_bytes(fig)
+
+
+def plot_roc_inline(model, X_test, y_test, nome, color):
+    y_prob = model.predict_proba(X_test)[:, 1]
+    fpr, tpr, _ = roc_curve(y_test, y_prob)
+    roc_auc = auc(fpr, tpr)
+    fig, ax = plt.subplots(figsize=(4, 3.5))
+    fig.patch.set_facecolor("#161B27")
+    ax.set_facecolor("#161B27")
+    ax.plot(fpr, tpr, color=color, lw=2, label=f"AUC = {roc_auc:.3f}")
+    ax.plot([0, 1], [0, 1], color="#374151", linestyle="--", lw=1)
+    ax.set_xlabel("Taxa de Falsos Positivos", color="#9CA3AF", fontsize=10)
+    ax.set_ylabel("Taxa de Verdadeiros Positivos", color="#9CA3AF", fontsize=10)
+    ax.set_title(f"Curva ROC — {nome}", color="#E8EAF0", fontsize=11, pad=10)
+    ax.legend(facecolor="#1E2535", labelcolor="#E8EAF0", fontsize=10)
+    ax.tick_params(colors="#9CA3AF")
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#2A2F3F")
+    plt.tight_layout()
+    return _fig_to_bytes(fig)
+
+
+def plot_roc_comparativo_inline(models, X_test, y_test):
+    colors = {"Logistic Regression": "#818CF8", "Random Forest": "#34D399", "Gradient Boosting": "#FBBF24"}
+    fig, ax = plt.subplots(figsize=(5, 4))
+    fig.patch.set_facecolor("#161B27")
+    ax.set_facecolor("#161B27")
+    for nome, model in models.items():
+        y_prob = model.predict_proba(X_test)[:, 1]
+        fpr, tpr, _ = roc_curve(y_test, y_prob)
+        roc_auc = auc(fpr, tpr)
+        ax.plot(fpr, tpr, color=colors[nome], lw=2, label=f"{nome} (AUC={roc_auc:.3f})")
+    ax.plot([0, 1], [0, 1], color="#374151", linestyle="--", lw=1)
+    ax.set_xlabel("FPR", color="#9CA3AF", fontsize=10)
+    ax.set_ylabel("TPR", color="#9CA3AF", fontsize=10)
+    ax.set_title("ROC Comparativo", color="#E8EAF0", fontsize=11, pad=10)
+    ax.legend(facecolor="#1E2535", labelcolor="#E8EAF0", fontsize=9)
+    ax.tick_params(colors="#9CA3AF")
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#2A2F3F")
+    plt.tight_layout()
+    return _fig_to_bytes(fig)
+
+
+def plot_comparacao_final_inline(all_metrics):
+    nomes     = [m["nome"]     for m in all_metrics]
+    acuracias = [m["acuracia"] for m in all_metrics]
+    f1s       = [m["f1"]       for m in all_metrics]
+    aucs      = [m["auc"]      for m in all_metrics]
+
+    x = np.arange(len(nomes))
+    w = 0.25
+    fig, ax = plt.subplots(figsize=(6, 4))
+    fig.patch.set_facecolor("#161B27")
+    ax.set_facecolor("#161B27")
+    ax.bar(x - w, acuracias, w, label="Acurácia", color="#818CF8", alpha=0.9)
+    ax.bar(x,     f1s,       w, label="F1-Score", color="#34D399", alpha=0.9)
+    ax.bar(x + w, aucs,      w, label="AUC",      color="#FBBF24", alpha=0.9)
+    ax.set_xticks(x)
+    ax.set_xticklabels(nomes, color="#9CA3AF", fontsize=9)
+    ax.set_ylim(0, 1.05)
+    ax.set_title("Comparação Final dos Modelos", color="#E8EAF0", fontsize=11, pad=10)
+    ax.legend(facecolor="#1E2535", labelcolor="#E8EAF0", fontsize=9)
+    ax.tick_params(colors="#9CA3AF")
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#2A2F3F")
+    plt.tight_layout()
+    return _fig_to_bytes(fig)
+
+
+def plot_feature_importance_inline(model, feature_names):
+    if not hasattr(model, "feature_importances_"):
+        return None
+    importances = model.feature_importances_
+    indices = np.argsort(importances)[-15:]
+    fig, ax = plt.subplots(figsize=(6, 5))
+    fig.patch.set_facecolor("#161B27")
+    ax.set_facecolor("#161B27")
+    ax.barh(
+        [feature_names[i] for i in indices],
+        importances[indices],
+        color="#FBBF24", alpha=0.85
+    )
+    ax.set_title("Feature Importance — Gradient Boosting", color="#E8EAF0", fontsize=11, pad=10)
+    ax.tick_params(colors="#9CA3AF", labelsize=9)
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#2A2F3F")
+    plt.tight_layout()
+    return _fig_to_bytes(fig)
+
 
 # ── Carrega modelo salvo ─────────────────────────────────────────────────────
 if 'modelo_carregado' not in st.session_state:
@@ -388,7 +510,6 @@ tab_previsao, tab_graficos = st.tabs([
 # ╚══════════════════════════════════════════════════════════════╝
 with tab_previsao:
 
-    # ── Formulário ──────────────────────────────────────────────
     st.markdown('<div class="section-label">Dados da Reserva</div>', unsafe_allow_html=True)
 
     col_a, col_b, col_c = st.columns(3, gap="medium")
@@ -403,16 +524,9 @@ with tab_previsao:
                 "Refundable":   "Reembolsável",
                 "No Deposit":   "Sem depósito",
             }[x],
-            help="Se o cliente pagou algum depósito antecipado e se ele pode ser devolvido ou não.",
         )
-        antecedencia_reserva = st.number_input(
-            "Antecedência da Reserva (dias)", min_value=0,
-            help="Quantos dias antes do check-in a reserva foi feita.",
-        )
-        pedidos_extras = st.number_input(
-            "Pedidos Extras", min_value=0,
-            help="Cama extra, berço, andar especial, travesseiro etc.",
-        )
+        antecedencia_reserva = st.number_input("Antecedência da Reserva (dias)", min_value=0)
+        pedidos_extras = st.number_input("Pedidos Extras", min_value=0)
 
     with col_b:
         segmento_mercado = st.selectbox(
@@ -427,21 +541,12 @@ with tab_previsao:
                 "Corporate":     "Empresa / corporativo",
             }[x],
         )
-        cancelamentos_anteriores = st.number_input(
-            "Cancelamentos Anteriores", min_value=0,
-            help="Quantas vezes esse cliente já cancelou no passado.",
-        )
+        cancelamentos_anteriores = st.number_input("Cancelamentos Anteriores", min_value=0)
         vagas_estacionamento = st.number_input("Vagas de Estacionamento", min_value=0)
 
     with col_c:
-        tarifa_media_diaria = st.number_input(
-            "Tarifa Média Diária (R$)", min_value=0.0, max_value=10000.0, step=10.0,
-            help="Valor médio por diária considerando descontos.",
-        )
-        alteracoes_reserva = st.number_input(
-            "Alterações na Reserva", min_value=0,
-            help="Quantas vezes o cliente modificou datas, quarto etc.",
-        )
+        tarifa_media_diaria = st.number_input("Tarifa Média Diária (R$)", min_value=0.0, max_value=10000.0, step=10.0)
+        alteracoes_reserva = st.number_input("Alterações na Reserva", min_value=0)
         tipo_cliente = st.selectbox(
             "Perfil do Cliente",
             ["Selecione...", "Transient", "Transient-Party"],
@@ -452,7 +557,7 @@ with tab_previsao:
             }[x],
         )
 
-    # ── Treinamento ─────────────────────────────────────────────
+    # ── Treinamento ──────────────────────────────────────────────
     st.markdown('<div class="section-label">Modelo</div>', unsafe_allow_html=True)
 
     btn_col, _ = st.columns([1, 3])
@@ -480,20 +585,18 @@ with tab_previsao:
 
             for nome, model in models.items():
                 metrics = evaluate_model(model, X_train_proc, y_train, X_test_proc, y_test, nome)
+                metrics["nome"] = nome  # FIX: garante que a chave "nome" existe
                 all_metrics.append(metrics)
-                plot_model_evaluation(
-                    metrics, y_test,
-                    cmap=MODEL_CMAPS[nome],
-                    fname=MODEL_EVAL_FNAMES[nome],
-                )
+                # FIX: salva cada modelo e métricas individualmente no session_state
                 st.session_state[f'modelo_{nome}']  = model
                 st.session_state[f'metrics_{nome}'] = metrics
 
-            st.session_state['preprocessor']     = preprocessor
-            st.session_state['models']            = models
-            st.session_state['X_test_proc']       = X_test_proc
-            st.session_state['y_test']            = y_test
-            st.session_state['feature_names']     = feature_names
+            st.session_state['preprocessor']  = preprocessor
+            st.session_state['models']         = models
+            st.session_state['X_test_proc']    = X_test_proc
+            st.session_state['y_test']         = y_test
+            st.session_state['feature_names']  = feature_names
+            st.session_state['all_metrics']    = all_metrics
 
             st.write("Exportando modelo final...")
             save_final_model(models["Gradient Boosting"], preprocessor)
@@ -501,9 +604,9 @@ with tab_previsao:
             st.session_state['modelo_final']     = models["Gradient Boosting"]
             st.session_state['modelo_carregado'] = True
 
-            status.update(label="Modelo treinado e salvo com sucesso! Veja os gráficos na aba 📊", state="complete")
+            status.update(label="Modelo treinado! Veja os gráficos na aba 📊", state="complete")
 
-    # ── Previsão ─────────────────────────────────────────────────
+    # ── Previsão ──────────────────────────────────────────────────
     st.markdown('<div class="section-label">Previsão</div>', unsafe_allow_html=True)
 
     prev_col, _ = st.columns([1, 3])
@@ -573,14 +676,19 @@ with tab_previsao:
                 """, unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # Comparativo dos 3 modelos
-        if 'models' in st.session_state:
+        # FIX: só mostra o comparativo se os modelos individuais foram treinados nessa sessão
+        modelos_individuais_prontos = (
+            'models' in st.session_state and
+            all(f'metrics_{n}' in st.session_state for n in st.session_state['models'].keys())
+        )
+
+        if modelos_individuais_prontos:
             st.markdown('<div class="section-label" style="margin-top:32px;">Comparativo de Classificadores</div>', unsafe_allow_html=True)
 
             cols = st.columns(3, gap="medium")
             for col, nome in zip(cols, st.session_state['models'].keys()):
                 with col:
-                    m     = st.session_state[f'modelo_{nome}']
+                    m     = st.session_state['models'][nome]
                     metr  = st.session_state[f'metrics_{nome}']
                     p_ind = m.predict(dados_proc)[0]
 
@@ -607,7 +715,9 @@ with tab_previsao:
 # ╚══════════════════════════════════════════════════════════════╝
 with tab_graficos:
 
-    if not st.session_state.get('modelo_carregado') and 'models' not in st.session_state:
+    modelos_prontos = 'models' in st.session_state and 'X_test_proc' in st.session_state
+
+    if not modelos_prontos:
         st.markdown("""
         <div class="chart-placeholder">
             <div style="font-size:36px;margin-bottom:12px;">📊</div>
@@ -616,6 +726,18 @@ with tab_graficos:
         """, unsafe_allow_html=True)
 
     else:
+        models        = st.session_state['models']
+        X_test_proc   = st.session_state['X_test_proc']
+        y_test        = st.session_state['y_test']
+        feature_names = st.session_state.get('feature_names', [])
+        all_metrics   = st.session_state.get('all_metrics', [])
+
+        MODEL_COLORS = {
+            "Logistic Regression": "#818CF8",
+            "Random Forest":       "#34D399",
+            "Gradient Boosting":   "#FBBF24",
+        }
+
         # ── Sub-abas por modelo ──────────────────────────────────
         st.markdown('<div class="section-label">Avaliação por Modelo</div>', unsafe_allow_html=True)
 
@@ -625,42 +747,65 @@ with tab_graficos:
             "📙 Gradient Boosting",
         ])
 
-        def render_model_charts(sub_tab, nome, fname):
+        for sub_tab, nome in zip([sub_lr, sub_rf, sub_gb], models.keys()):
             with sub_tab:
-                img_path = os.path.join(REPORTS_DIR, fname)
-                if os.path.exists(img_path):
-                    st.image(img_path, use_container_width=True)
-                else:
-                    st.markdown(f'<div class="chart-placeholder">Gráfico <code>{fname}</code> não encontrado em reports/.</div>', unsafe_allow_html=True)
+                model = models[nome]
+                cmap  = MODEL_CMAPS[nome]
+                color = MODEL_COLORS[nome]
 
-        render_model_charts(sub_lr, "Logistic Regression", MODEL_EVAL_FNAMES["Logistic Regression"])
-        render_model_charts(sub_rf, "Random Forest",       MODEL_EVAL_FNAMES["Random Forest"])
-        render_model_charts(sub_gb, "Gradient Boosting",   MODEL_EVAL_FNAMES["Gradient Boosting"])
+                c1, c2 = st.columns(2, gap="medium")
+                with c1:
+                    st.caption("Matriz de Confusão")
+                    buf = plot_confusion_matrix_inline(model, X_test_proc, y_test, cmap, nome)
+                    st.image(buf, use_container_width=True)
+                with c2:
+                    st.caption("Curva ROC")
+                    buf = plot_roc_inline(model, X_test_proc, y_test, nome, color)
+                    st.image(buf, use_container_width=True)
+
+                metr = st.session_state.get(f'metrics_{nome}')
+                if metr:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    mc1, mc2, mc3, mc4 = st.columns(4, gap="small")
+                    for col, (label, key) in zip(
+                        [mc1, mc2, mc3, mc4],
+                        [("Acurácia","acuracia"),("Precisão","precisao"),("Recall","recall"),("F1-Score","f1")]
+                    ):
+                        with col:
+                            st.markdown(
+                                f'<div class="metric-card"><div class="metric-value">{metr[key]:.0%}</div>'
+                                f'<div class="metric-label">{label}</div></div>',
+                                unsafe_allow_html=True
+                            )
 
         # ── Gráficos globais ─────────────────────────────────────
         st.markdown('<div class="section-label" style="margin-top:40px;">Comparativo Geral</div>', unsafe_allow_html=True)
 
-        global_charts = {
-            "ROC Comparativo":         "11_roc_comparativo.png",
-            "Comparação Final":        "12_comparacao_final.png",
-            "Feature Importance (GB)": "13_best_model_importance.png",
-        }
+        g1, g2, g3 = st.columns(3, gap="medium")
 
-        g_cols = st.columns(len(global_charts), gap="medium")
-        for col, (label, fname) in zip(g_cols, global_charts.items()):
-            with col:
-                img_path = os.path.join(REPORTS_DIR, fname)
-                st.caption(label)
-                if os.path.exists(img_path):
-                    st.image(img_path, use_container_width=True)
+        with g1:
+            st.caption("ROC Comparativo")
+            buf = plot_roc_comparativo_inline(models, X_test_proc, y_test)
+            st.image(buf, use_container_width=True)
+
+        with g2:
+            st.caption("Comparação Final")
+            if all_metrics:
+                buf = plot_comparacao_final_inline(all_metrics)
+                st.image(buf, use_container_width=True)
+            else:
+                st.markdown('<div class="chart-placeholder" style="padding:32px 16px;">Dados indisponíveis.</div>', unsafe_allow_html=True)
+
+        with g3:
+            st.caption("Feature Importance (GB)")
+            if feature_names:
+                buf = plot_feature_importance_inline(models["Gradient Boosting"], feature_names)
+                if buf:
+                    st.image(buf, use_container_width=True)
                 else:
-                    st.markdown(f'<div class="chart-placeholder" style="padding:32px 16px;">Gráfico não gerado ainda.<br><small>{fname}</small></div>', unsafe_allow_html=True)
-
-        # ── K-Fold ───────────────────────────────────────────────
-        kfold_path = os.path.join(REPORTS_DIR, "14_kfold.png")
-        if os.path.exists(kfold_path):
-            st.markdown('<div class="section-label" style="margin-top:40px;">Validação Cruzada (K-Fold)</div>', unsafe_allow_html=True)
-            st.image(kfold_path, use_container_width=True)
+                    st.markdown('<div class="chart-placeholder" style="padding:32px 16px;">Modelo sem feature_importances_.</div>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="chart-placeholder" style="padding:32px 16px;">Feature names indisponíveis.</div>', unsafe_allow_html=True)
 
 
 # ── Footer ────────────────────────────────────────────────────────────────────
