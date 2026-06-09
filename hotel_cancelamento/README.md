@@ -219,7 +219,7 @@ O app abrirá automaticamente em `http://localhost:8501`
 
 ## Link do App Publicado
 
- **[https://hotelcancelamentovscode-zp3jmgbh9jhnpwpw2daj8v.streamlit.app](https://hotelcancelamentovscode-zp3jmgbh9jhnpwpw2daj8v.streamlit.app)**
+ **https://hotelcancelamentovscode-zp3jmgbh9jhnpwpw2daj8v.streamlit.app/**
 
 ---
 
