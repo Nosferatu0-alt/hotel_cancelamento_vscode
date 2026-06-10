@@ -138,53 +138,12 @@ Principais variáveis que influenciam o cancelamento (importância do Gradient B
 - **previous_cancellations** — histórico de cancelamentos anteriores do cliente (6,14%)
 ---
 
-
-## Estrutura dos Arquivos
-![Python](https://img.shields.io/badge/python-3.9+-blue.svg) ![Scikit-Learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikit-learn&logoColor=white) ![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?logo=pandas&logoColor=white) ![Status](https://img.shields.io/badge/status-concluído-brightgreen)
-
-# Previsão de Cancelamento de Reservas em Hotéis
-
-Machine Learning aplicado ao setor de hotelaria
-
-## Integrantes
-
-| Nome | RA |
-|---|---|
-| Lucia Maria Reis Braga | 2035292 |
-| Kenji Yuri Mitsuka de Paula | 2033472 |
-| Matheus Bargas Rodrigues Flausino | 2057008 |
-
----
-
-## Visão Geral
-
-O setor hoteleiro sofre prejuízos significativos com cancelamentos de reservas de última hora. Quando um cliente cancela sem aviso prévio, o hotel perde receita e dificilmente consegue preencher o quarto no mesmo período. Identificar com antecedência quais reservas têm alta probabilidade de cancelamento permite que os gestores tomem ações preventivas, como políticas de overbooking controlado ou contato proativo com o cliente.
-
-O problema é tratado como classificação binária:
-- `1` → Reserva cancelada
-- `0` → Reserva mantida
-
----
-
 ## Pipeline do Projeto
 
 ```text
 Dados → Limpeza → EDA → Pré-processamento → Modelagem → Avaliação
 ```
 
----
-
-## Descrição do Problema
-
-O setor hoteleiro sofre prejuízos significativos com cancelamentos de reservas de última hora. Quando um cliente cancela sem aviso prévio, o hotel perde receita e dificilmente consegue preencher o quarto no mesmo período.
-
----
-
-## Objetivo do Projeto
-
-Desenvolver um modelo de Machine Learning capaz de prever se uma reserva de hotel será **cancelada ou mantida**, com base nas características da reserva e do cliente, e disponibilizar esse modelo em uma aplicação web interativa via Streamlit.
-
----
 
 ## Dataset Utilizado
 
