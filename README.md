@@ -78,15 +78,14 @@ Foram treinados e comparados três classificadores:
 - **Logistic Regression** — modelo linear como baseline
 - **Random Forest** — ensemble de árvores de decisão
 - **Gradient Boosting** — boosting sequencial de árvores
+-
+- ### Tabela Comparativa de Modelos
 
-=====================================================================================
-TABELA COMPARATIVA 
-=====================================================================================
-             Modelo Acurácia Precisão Recall F1-Score AUC-ROC AUC CV (média)
-Logistic Regression   0.7913   0.8015 0.5809   0.6736  0.8334         0.8493
-      Random Forest   0.7967   0.8910 0.5144   0.6522  0.8588         0.8744
-  Gradient Boosting   0.8080   0.8160 0.6223   0.7061  0.8661         0.8793
-=====================================================================================
+| Modelo | Acurácia | Precisão | Recall | F1-Score | AUC-ROC | AUC CV (média) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Logistic Regression** | 0.7913 | 0.8015 | 0.5809 | 0.6736 | 0.8334 | 0.8493 |
+| **Random Forest** | 0.7967 | 0.8910 | 0.5144 | 0.6522 | 0.8588 | 0.8744 |
+| **Gradient Boosting** | 0.8080 | 0.8160 | 0.6223 | 0.7061 | 0.8661 | 0.8793 |
 
 ---
 
