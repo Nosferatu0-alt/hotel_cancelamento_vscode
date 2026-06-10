@@ -110,18 +110,14 @@ Hiperparâmetros utilizados:
 | Random Forest | 79,67% | 89,10% | 51,44% | 65,22% | 0,8588 |
 | **Gradient Boosting** | **80,80%** | **81,60%** | **62,23%** | **70,61%** | **86,61** |
 
-### Gradient Boosting — Detalhamento por classe
 
-|              |precision  |  recall | f1-score  | support |
-|----------------------------------------------------------|
-| Mantida      | 0.80      |  0.92    |  0.86       944    |
-| Cancelada    | 0.82      |  0.62    |  0.71       556    |
-|              |           |          |                    |
-| accuracy     |           |          |  0.81      1500    |
-| macro avg    | 0.81      |  0.77    |  0.78      1500    |
-| weighted avg | 0.81      |  0.81    |  0.80      1500    |
+### Tabela Comparativa de Modelos
 
-
+| Modelo | Acurácia | Precisão | Recall | F1-Score | AUC-ROC | AUC CV (média) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Logistic Regression** | 0.7913 | 0.8015 | 0.5809 | 0.6736 | 0.8334 | 0.8493 |
+| **Random Forest** | 0.7967 | 0.8910 | 0.5144 | 0.6522 | 0.8588 | 0.8744 |
+| **Gradient Boosting** | 0.8080 | 0.8160 | 0.6223 | 0.7061 | 0.8661 | 0.8793 |
 ---
 
 ##  Principais Resultados
